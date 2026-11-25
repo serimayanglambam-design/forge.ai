@@ -1,0 +1,10 @@
+pydantic
+ollama
+typer
+rank-bm25
+faiss-cpu
+pypdf
+pandas
+rich
+pytest
+numpy
