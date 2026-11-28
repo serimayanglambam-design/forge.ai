@@ -38,6 +38,20 @@ class EvalCase(BaseModel):
     expected_key_facts: list[str] = []
     should_refuse: bool = False
 
+class GenItem(BaseModel):
+    question: str
+    expected_key_facts: list[str]
+
+class GenItems(BaseModel):
+    items: list[GenItem]
+
+class OOSItem(BaseModel):
+    question: str
+    kind: Literal["near_miss", "off_topic"]
+
+class OOSItems(BaseModel):
+    items: list[OOSItem]
+
 class CaseResult(BaseModel):
     case_id: str
     answer: str

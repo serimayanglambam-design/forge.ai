@@ -4,6 +4,7 @@ from typing import Type, TypeVar
 import ollama
 from pydantic import BaseModel, ValidationError
 from . import config
+import re
 
 T = TypeVar("T", bound=BaseModel)
 PROMPTS = Path(__file__).parent / "prompts"
@@ -16,6 +17,10 @@ def set_log(path: Path):
 
 def render(prompt_file: str, vars: dict) -> str:
     text = (PROMPTS / prompt_file).read_text(encoding="utf-8")
+    needed = set(re.findall(r"\{\{(\w+)\}\}", text))
+    missing = needed - set(vars)
+    if missing:
+        raise ValueError(f"{prompt_file}: missing prompt variables {sorted(missing)}")
     for k, v in vars.items():
         text = text.replace("{{" + k + "}}", str(v))
     return text
