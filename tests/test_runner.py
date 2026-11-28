@@ -7,11 +7,12 @@ import pytest
 from forgeai import runner
 from forgeai.runner import AgentResponse, _extract_cited_sources, load_agent
 
-SAMPLE_DIR = Path(__file__).resolve().parents[1] / "data" / "sample"
+AGENT_PATH = Path(__file__).resolve().parents[1] / "data" / "sample_agent" / "agent.json"
+DOCS_DIR = Path(__file__).resolve().parents[1] / "data" / "sample"
 
 
 def test_load_agent_from_sample_files() -> None:
-    agent = load_agent(str(SAMPLE_DIR / "agent.json"), str(SAMPLE_DIR))
+    agent = load_agent(str(AGENT_PATH), str(DOCS_DIR))
 
     assert agent.definition.name == "Sample Document Assistant"
     assert agent.tools == []
@@ -20,14 +21,13 @@ def test_load_agent_from_sample_files() -> None:
 
 
 def test_load_agent_rejects_unknown_tool(tmp_path: Path) -> None:
-    definition_path = SAMPLE_DIR / "agent.json"
-    definition = json.loads(definition_path.read_text(encoding="utf-8"))
+    definition = json.loads(AGENT_PATH.read_text(encoding="utf-8"))
     definition["tools"] = ["not_registered"]
     agent_path = tmp_path / "agent.json"
     agent_path.write_text(json.dumps(definition), encoding="utf-8")
 
     with pytest.raises(ValueError, match="Unknown tool 'not_registered'"):
-        load_agent(str(agent_path), str(SAMPLE_DIR))
+        load_agent(str(agent_path), str(DOCS_DIR))
 
 
 def test_answer_detects_refusal_and_only_reports_cited_retrieved_sources(
@@ -41,7 +41,7 @@ def test_answer_detects_refusal_and_only_reports_cited_retrieved_sources(
         return {"message": {"content": refusal, "tool_calls": []}}
 
     monkeypatch.setattr(runner.ollama, "chat", fake_chat)
-    agent = load_agent(str(SAMPLE_DIR / "agent.json"), str(SAMPLE_DIR))
+    agent = load_agent(str(AGENT_PATH), str(DOCS_DIR))
 
     response = agent.answer("What is the annual leave allowance?")
 
@@ -66,7 +66,7 @@ def test_answer_reports_only_cited_retrieved_documents(
         }
 
     monkeypatch.setattr(runner.ollama, "chat", fake_chat)
-    agent = load_agent(str(SAMPLE_DIR / "agent.json"), str(SAMPLE_DIR))
+    agent = load_agent(str(AGENT_PATH), str(DOCS_DIR))
 
     response = agent.answer("How much annual leave is provided?")
 
@@ -111,7 +111,7 @@ def test_answer_runs_attached_tool_and_appends_tool_result(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     definition = json.loads(
-        (SAMPLE_DIR / "agent.json").read_text(encoding="utf-8")
+        AGENT_PATH.read_text(encoding="utf-8")
     )
     definition["tools"] = ["current_date"]
     agent_path = tmp_path / "agent.json"
@@ -153,7 +153,7 @@ def test_answer_runs_attached_tool_and_appends_tool_result(
         return response
 
     monkeypatch.setattr(runner.ollama, "chat", fake_chat)
-    agent = load_agent(str(agent_path), str(SAMPLE_DIR))
+    agent = load_agent(str(agent_path), str(DOCS_DIR))
 
     response = agent.answer("What is today's date?")
 
